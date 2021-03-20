@@ -20,7 +20,7 @@ def sign_in(server, pat_name, pat_secret, site=''):
         'content-type': 'application/json',
     }
 
-    req = requests.post(url, json=payload, headers=headers, verify=False)
+    req = requests.post(url, json=payload, headers=headers)
     req.raise_for_status()
 
     response = json.loads(req.content)
@@ -52,10 +52,11 @@ def create_user(server, auth, site_id, user_info):
         'X-Tableau-Auth': auth,
     }
 
-    req = requests.post(url, json=payload, headers=headers, verify=False)
+    req = requests.post(url, json=payload, headers=headers)
     req.raise_for_status()
 
     response = json.loads(req.content)
+    print(response)
     user_id = response['user']['id']
 
     return user_id
@@ -85,13 +86,29 @@ def update_user(server, auth, site_id, user_id, user_info):
         'X-Tableau-Auth': auth,
     }
 
-    req = requests.put(url, json=payload, headers=headers, verify=False)
+    req = requests.put(url, json=payload, headers=headers)
     req.raise_for_status()
-
     response = json.loads(req.content)
-    user_id = response['user']['id']    
+    print(response)
+    user = response['user']
 
-    return True
+    return user
+
+def get_users(server, auth, site_id):
+    url = f'{server}/api/{API_VERSION}/sites/{site_id}/users'
+
+    headers = {
+        'accept': 'application/json',
+        'content-type': 'application/json',
+        'X-Tableau-Auth': auth,
+    }
+
+    req = requests.get(url, headers=headers)
+    req.raise_for_status()
+    response = json.loads(req.content)
+    users = response['users']
+
+    return users
 
 def get_user(server, auth, site_id, user_info):
     url = f'{server}/api/{API_VERSION}/sites/{site_id}/users'
@@ -107,8 +124,10 @@ def get_user(server, auth, site_id, user_info):
 
     if user_email != '':
         url = f'{url}?filter=name:eq:{user_email}'
+    else:
+        url = f'{url}'
 
-    req = requests.get(url, headers=headers, verify=False)
+    req = requests.get(url, headers=headers)
     req.raise_for_status()
     response = json.loads(req.content)
     user_id = response['users']['user'][0]['id']
@@ -124,7 +143,7 @@ def delete_user(server, auth, site_id, user_id):
         'X-Tableau-Auth': auth,
     }
 
-    req = requests.delete(url, headers=headers, verify=False)
+    req = requests.delete(url, headers=headers)
     req.raise_for_status()
 
     return True    
@@ -156,4 +175,4 @@ if __name__ == '__main__':
     print(to_update_user_info)
 
     is_updated = update_user(server, token, site_id, created_user_id, to_update_user_info)
-    print(f'user {created_user_id} is updated? {is_updated}')
+    print(f'user {created_user_id} is updated with {is_updated}')
